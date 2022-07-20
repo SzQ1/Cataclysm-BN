@@ -118,8 +118,6 @@ static const std::string flag_LITCIG( "LITCIG" );
 static const std::string flag_LOCKED( "LOCKED" );
 static const std::string flag_MAGIC_FOCUS( "MAGIC_FOCUS" );
 static const std::string flag_NO_QUICKDRAW( "NO_QUICKDRAW" );
-static const std::string flag_RELOAD_AND_SHOOT( "RELOAD_AND_SHOOT" );
-static const std::string flag_RELOAD_ONE( "RELOAD_ONE" );
 
 static const std::string flag_SLEEP_IGNORE( "SLEEP_IGNORE" );
 
@@ -807,6 +805,32 @@ static void smash()
             } else {
                 // %s is the smashed terrain
                 add_msg( m_neutral, _( "You don't seem to be damaging the %s." ), m.tername( smashp ) );
+            }
+        }
+
+        if( !m.has_floor_or_support( u.pos() ) ) {
+            cata::optional<tripoint> to_safety;
+            while( true ) {
+                to_safety = choose_direction( _( "Floor below destroyed!  Move where?" ) );
+                if( to_safety && *to_safety == tripoint_zero ) {
+                    to_safety.reset();
+                }
+                if( !to_safety && query_yn( _( "Fall down?" ) ) ) {
+                    break;
+                }
+
+                if( to_safety ) {
+                    tripoint oldpos = u.pos();
+                    tripoint newpos = u.pos() + *to_safety;
+                    // game::walk_move will return true even if you don't move
+                    if( g->walk_move( newpos ) && u.pos() != oldpos ) {
+                        break;
+                    }
+                }
+            }
+            if( !to_safety ) {
+                // HACK! We should have a "fall down" function instead of invoking ledge trap
+                m.creature_on_trap( u, false );
             }
         }
     } else {
@@ -2043,19 +2067,18 @@ bool game::handle_action()
             }
 
             case ACTION_SELECT_FIRE_MODE:
-                if( u.is_armed() ) {
-                    if( u.weapon.is_gun() && !u.weapon.is_gunmod() && u.weapon.gun_all_modes().size() > 1 ) {
+                if( u.is_armed() && u.weapon.is_gun() && !u.weapon.is_gunmod() ) {
+                    if( u.weapon.gun_all_modes().size() > 1 ) {
                         u.weapon.gun_cycle_mode();
-                    } else if( u.weapon.has_flag( flag_RELOAD_ONE ) || u.weapon.has_flag( flag_RELOAD_AND_SHOOT ) ) {
-                        item::reload_option opt = u.select_ammo( u.weapon, false );
-                        if( !opt ) {
-                            break;
-                        } else if( u.ammo_location && opt.ammo == u.ammo_location ) {
-                            u.ammo_location = item_location();
-                        } else {
-                            u.ammo_location = opt.ammo;
-                        }
+                    } else {
+                        add_msg( m_info, _( "Your %s has only one firing mode." ), u.weapon.display_name() );
                     }
+                }
+                break;
+
+            case ACTION_SELECT_DEFAULT_AMMO:
+                if( u.is_armed() && u.weapon.is_gun() && !u.weapon.is_gunmod() ) {
+                    ranged::prompt_select_default_ammo_for( u, u.weapon );
                 }
                 break;
 

@@ -319,6 +319,8 @@ void map::clear_vehicle_list( const int zlev )
     auto &ch = get_cache( zlev );
     ch.vehicle_list.clear();
     ch.zone_vehicles.clear();
+
+    last_full_vehicle_list_dirty = true;
 }
 
 void map::update_vehicle_list( const submap *const to, const int zlev )
@@ -3162,12 +3164,14 @@ static int get_sound_volume( const map_bash_info &bash )
 {
     int smin = bash.str_min;
     int smax = bash.str_max;
-    return bash.sound_vol.value_or( std::min( static_cast<int>( smin * 1.5 ), smax ) );;
+    // TODO: Consider setting this in finalize instead of calculating here
+    return bash.sound_vol.value_or( std::min( static_cast<int>( smin * 1.5 ), smax ) );
 }
 
 bash_results map::bash_ter_success( const tripoint &p, const bash_params &params )
 {
     bash_results result;
+    result.success = true;
     const ter_t &ter_before = ter( p ).obj();
     const map_bash_info &bash = ter_before.bash;
     if( has_flag_ter( "FUNGUS", p ) ) {
@@ -3185,6 +3189,7 @@ bash_results map::bash_ter_success( const tripoint &p, const bash_params &params
     } else if( bash.ter_set ) {
         // If the terrain has a valid post-destroy terrain, set it
         ter_set( p, bash.ter_set );
+        follow_below |= zlevels && bash.bash_below;
     } else if( suspended ) {
         // Its important that we change the ter value before recursing, otherwise we'll hit an infinite loop.
         // This could be prevented by assembling a visited list, but in order to avoid that cost, we're going
@@ -3209,43 +3214,74 @@ bash_results map::bash_ter_success( const tripoint &p, const bash_params &params
                        soundfxid, soundfxvariant );
     }
 
-    if( ter( p ) == t_open_air ) {
-        tripoint below( p.xy(), p.z - 1 );
-        const ter_t &ter_below = ter( below ).obj();
-        if( !zlevels ) {
+    if( !zlevels ) {
+        if( ter( p ) == t_open_air ) {
             // We destroyed something, so we aren't just "plugging" air with dirt here
             ter_set( p, t_dirt );
-        } else if( follow_below ) {
-            if( ter_below.roof == ter_before.id ) {
-                bash_params params_below = params;
-                params_below.bashing_from_above = true;
-                params_below.bash_floor = false;
-                params_below.destroy = true;
-                int tries = 10;
-                // Unconditionally destroy, but don't go deeper
-                do {
-                    result |= bash_ter_success( below, params_below );
-                } while( impassable( below ) && tries-- > 0 );
-                if( tries <= 0 ) {
-                    debugmsg( "Loop in terrain bashing for type %s", ter_before.id.str() );
-                }
-            } else {
-                // Replace with the roof, then bash that with same exact params as for this floor
-                // Note: we're bashing the new roof, not the tile supported by it!
-                ter_set( p, ter_below.roof );
-                int tries = 10;
-                bash_results results_sub;
-                do {
+        }
+    } else if( follow_below || ter( p ) == t_open_air ) {
+        const tripoint below( p.xy(), p.z - 1 );
+        // We may need multiple bashes in some weird cases
+        // Example:
+        //   W has roof A
+        //   A bashes to B
+        //   B bashes to nothing
+        //   Below our point P, there is a W
+        // If we bash down a B over a W, it might be from earlier A or just constructed over it!
+        //
+        // Current solution: bash roof until you reach same roof type twice, then bash down
+        if( follow_below && params.do_recurse ) {
+            bool blocked_by_roof = false;
+            std::set<ter_id> encountered_types;
+            encountered_types.insert( ter_before.id );
+            encountered_types.insert( t_open_air );
+            // Note: we're bashing the new roof, not the tile supported by it!
+            int down_bash_tries = 10;
+            do {
+                const ter_id &ter_now = ter( p );
+                if( encountered_types.count( ter_now ) != 0 ) {
+                    // We have encountered this type before and destroyed it (didn't block us)
+                    ter_set( p, t_open_air );
+                    bash_params params_below = params;
+                    params_below.bashing_from_above = true;
+                    params_below.bash_floor = false;
+                    params_below.do_recurse = false;
+                    params_below.destroy = true;
+                    int impassable_bash_tries = 10;
+                    // Unconditionally destroy, but don't go deeper
+                    do {
+                        result |= bash_ter_success( below, params_below );
+                    } while( ter( below )->movecost == 0 && impassable_bash_tries-- > 0 );
+                    if( impassable_bash_tries <= 0 ) {
+                        debugmsg( "Loop in terrain bashing for type %s", ter_before.id.str() );
+                    }
+                } else if( ter_now == t_open_air ) {
+                    const ter_id &roof = get_roof( below, params.bash_floor && ter( below )->movecost != 0 );
+                    if( roof != t_open_air ) {
+                        ter_set( p, roof );
+                    }
+                } else {
+                    // This floor/roof tile wasn't destroyed in this loop yet
+                    encountered_types.insert( ter_now );
+                    bash_params params_copy = params;
+                    params_copy.do_recurse = false;
+                    // TODO: Unwrap the calls, don't recurse
                     // TODO: Don't bash furn
-                    results_sub = bash_ter_furn( p, params );
+                    bash_results results_sub = bash_ter_furn( p, params_copy );
                     result |= results_sub;
-                } while( results_sub.success && tries-- > 0 );
-                if( tries <= 0 ) {
-                    debugmsg( "Loop in terrain bashing for type %s", ter_before.id.str() );
+                    if( !results_sub.success ) {
+                        // Blocked, as in "the roof was too strong to bash"
+                        blocked_by_roof = true;
+                    }
                 }
+            } while( down_bash_tries-- > 0 && !blocked_by_roof &&
+                     ( ter( p ) != t_open_air || ter( p )->movecost == 0 || ter( below )->roof ) );
+            if( down_bash_tries <= 0 ) {
+                debugmsg( "Loop in terrain bashing for type %s", ter_before.id.str() );
             }
         } else {
             const ter_id &roof = get_roof( below, params.bash_floor && ter( below )->movecost != 0 );
+
             ter_set( p, roof );
         }
     }
@@ -3368,9 +3404,11 @@ bash_results map::bash_ter_furn( const tripoint &p, const bash_params &params )
 
     if( furn_obj.id && furn_obj.bash.str_max != -1 ) {
         bash = &furn_obj.bash;
+        soundfxvariant = furn_obj.id.str();
     } else if( ter_obj.bash.str_max != -1 ) {
         bash = &ter_obj.bash;
         smash_ter = true;
+        soundfxvariant = ter_obj.id.str();
     }
 
     // Floor bashing check
@@ -3484,7 +3522,7 @@ bash_results map::bash( const tripoint &p, const int str,
                         const vehicle *bashing_vehicle )
 {
     bash_params bsh{
-        str, silent, destroy, bash_floor, static_cast<float>( rng_float( 0, 1.0f ) ), false
+        str, silent, destroy, bash_floor, static_cast<float>( rng_float( 0, 1.0f ) ), false, true
     };
     bash_results result;
     if( !inbounds( p ) ) {
@@ -3594,8 +3632,14 @@ void map::destroy( const tripoint &p, const bool silent )
 {
     // Break if it takes more than 25 destructions to remove to prevent infinite loops
     // Example: A bashes to B, B bashes to A leads to A->B->A->...
+
+    // If we were destroying a floor, allow destroying floors
+    // If we were destroying something unpassable, destroy only that
+    bool was_impassable = impassable( p );
     int count = 0;
-    while( count <= 25 && bash( p, 999, silent, true ).success ) {
+    while( count <= 25
+           && bash( p, 999, silent, true ).success
+           && ( !was_impassable || impassable( p ) ) ) {
         count++;
     }
 }
