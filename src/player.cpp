@@ -2926,7 +2926,7 @@ hint_rating player::rate_action_takeoff( const item &it ) const
         return hint_rating::cant;
     }
 
-    if( is_worn( it ) ) {
+    if( is_worn( it ) && can_takeoff( it ).success() ) {
         return hint_rating::good;
     }
 
@@ -2950,7 +2950,7 @@ bool player::can_lift( int lift_strength_required ) const
     return str + npc_str >= lift_strength_required;
 }
 
-ret_val<bool> player::can_takeoff( const item &it, const std::list<item> *res )
+ret_val<bool> player::can_takeoff( const item &it, const std::list<item> *res ) const
 {
     auto iter = std::find_if( worn.begin(), worn.end(), [ &it ]( const item & wit ) {
         return &it == &wit;
@@ -4407,7 +4407,21 @@ bool player::query_yn( const std::string &mes ) const
     return ::query_yn( mes );
 }
 
-int player::calc_focus_equilibrium( bool ignore_pain ) const
+int calc_fatigue_cap( int fatigue )
+{
+    if( fatigue >= fatigue_levels::massive ) {
+        return 20;
+    } else if( fatigue >= fatigue_levels::exhausted ) {
+        return 40;
+    } else if( fatigue >= fatigue_levels::dead_tired ) {
+        return 60;
+    } else if( fatigue >= fatigue_levels::tired ) {
+        return 80;
+    }
+    return 0;
+}
+
+int player::calc_focus_equilibrium() const
 {
     int focus_equilibrium = 100;
 
@@ -4426,8 +4440,14 @@ int player::calc_focus_equilibrium( bool ignore_pain ) const
     int eff_morale = get_morale_level();
     // Factor in perceived pain, since it's harder to rest your mind while your body hurts.
     // Cenobites don't mind, though
-    if( !ignore_pain && !has_trait( trait_CENOBITE ) ) {
+    if( !has_trait( trait_CENOBITE ) ) {
         eff_morale = eff_morale - get_perceived_pain();
+    }
+
+    // as baseline morale is 100, calc_fatigue_cap() has to -100 to apply accurate penalties.
+    if( calc_fatigue_cap( this->get_fatigue() ) != 0 &&
+        eff_morale > calc_fatigue_cap( this->get_fatigue() ) - 100 ) {
+        eff_morale = calc_fatigue_cap( this->get_fatigue() ) - 100;
     }
 
     if( eff_morale < -99 ) {
@@ -4492,14 +4512,6 @@ int player::calc_focus_change() const
 
     gain *= base_change;
 
-    // Fatigue will incrementally decrease any focus above related cap
-    if( ( get_fatigue() >= fatigue_levels::tired && focus_pool > 100 ) ||
-        ( get_fatigue() >= fatigue_levels::dead_tired && focus_pool > 75 ) ||
-        ( get_fatigue() >= fatigue_levels::exhausted && focus_pool > 50 ) ||
-        ( get_fatigue() >= fatigue_levels::massive && focus_pool > 25 ) ) {
-
-        gain = std::min( gain, -1 );
-    }
     return gain;
 }
 
