@@ -1,5 +1,6 @@
 var NAVTREEINDEX59 =
 {
+"classplayer.html#ae02e3074363fa28982a0f7e08f4cc8ad":[36,0,733,219],
 "classplayer.html#ae045a282ca91bc999a0db121a6948e2c":[36,0,733,158],
 "classplayer.html#ae1827f3e149c8cbbfdf6ba1803cbf80d":[36,0,733,6],
 "classplayer.html#ae1d6e52d9fb8fdf08eecb74890a28342":[36,0,733,108],
@@ -91,7 +92,6 @@ var NAVTREEINDEX59 =
 "classplayer__activity.html#ae7eb73e1613215c4508b0345de0303f7":[36,0,734,17],
 "classplayer__activity.html#af40e3a7e2719460248e8c7d4661b9fa8":[36,0,734,36],
 "classplayer__morale.html":[36,0,735],
-"classplayer__morale.html#a05a94382ea9fa307b058a19659b858ff":[36,0,735,16],
 "classplayer__morale.html#a0974d1b5faca8295ddc5ed84edf9aa02":[36,0,735,42],
 "classplayer__morale.html#a0a721ca1c9917b62b4308c2ef6bc7052":[36,0,735,28],
 "classplayer__morale.html#a1056cd7d4a7291b62742feb18f03d933":[36,0,735,15],
@@ -118,6 +118,7 @@ var NAVTREEINDEX59 =
 "classplayer__morale.html#a5d2578816a5b12659b415b0d094a876e":[36,0,735,58],
 "classplayer__morale.html#a6333bbc44dd5352ee747b82bd1dd1b3e":[36,0,735,32],
 "classplayer__morale.html#a63675cee3fc7bcdfed82111972efb80d":[36,0,735,49],
+"classplayer__morale.html#a6e4e61b329678f54956a8a066ce45fe0":[36,0,735,16],
 "classplayer__morale.html#a6e94620800b80e74af1d7783f2adcb5a":[36,0,735,57],
 "classplayer__morale.html#a70bcbaf8a3e198e621d91bfb6fece27a":[36,0,735,25],
 "classplayer__morale.html#a714aaae139807626dadc09ea13badd8f":[36,0,735,38],
@@ -225,8 +226,8 @@ var NAVTREEINDEX59 =
 "classprintf__arg__formatter.html#a852e7a37fef46d579690ea30b8c68861":[36,0,746,8],
 "classprintf__arg__formatter.html#a89c23f2c6801475cb6f7e814b2a8e67e":[36,0,746,10],
 "classprintf__arg__formatter.html#a985529e3e633ce43f7e5261fa11ac3f6":[36,0,746,6],
-"classprintf__arg__formatter.html#aa751a29c68a1f4d7292160a176e17639":[36,0,746,11],
 "classprintf__arg__formatter.html#aa751a29c68a1f4d7292160a176e17639":[36,0,746,12],
+"classprintf__arg__formatter.html#aa751a29c68a1f4d7292160a176e17639":[36,0,746,11],
 "classprintf__arg__formatter.html#ad1eb24ea2b7c065bc176269fb9136ada":[36,0,746,5],
 "classprintf__arg__formatter.html#ae7a8ddae47b8bc0ad3cd0248299e7a4a":[36,0,746,16],
 "classprintf__arg__formatter.html#af0151b330f97bc42c4d97cd36fe4be18":[36,0,746,9],
@@ -248,6 +249,5 @@ var NAVTREEINDEX59 =
 "classprofession.html#a3ca53d603bd92f42c02964eec2c13637":[36,0,748,53],
 "classprofession.html#a3da8142b3a8a4c6f0e9dd7ca28cd5370":[36,0,748,11],
 "classprofession.html#a3f64b440818a57bd7c5e55799b73de50":[36,0,748,16],
-"classprofession.html#a42bda0dbd36a81cb8889a96b6f3062b7":[36,0,748,50],
-"classprofession.html#a4b56a857fcce5c77ce00507bd2e21056":[36,0,748,56]
+"classprofession.html#a42bda0dbd36a81cb8889a96b6f3062b7":[36,0,748,50]
 };
