@@ -3520,8 +3520,8 @@ bool overmap::build_lab( const tripoint_om_omt &p, lab &l, int s,
         }
     }
 
-    // 4th story of labs is a candidate for lab escape, as long as there's no train or finale.
-    if( prefix.empty() && p.z() == -4 && train_odds == 0 && numstairs > 0 ) {
+    // 4th story of labs and down are candidates for lab escape, as long as there's no train or finale.
+    if( prefix.empty() && p.z() <= -4 && train_odds == 0 && numstairs > 0 ) {
         tripoint_om_omt cell;
         int tries = 0;
         int adjacent_labs = 0;
@@ -3692,6 +3692,14 @@ void overmap::build_mine( const tripoint_om_omt &origin, int s )
         s = 2;
     }
     tripoint_om_omt p = origin;
+    // Don't overwrite existing mapgen
+    while( ter( p ) != empty_rock ) {
+        if( one_in( 2 ) ) {
+            p.x() += rng( 0, 1 ) * 2 - 1;
+        } else {
+            p.y() += rng( 0, 1 ) * 2 - 1;
+        }
+    }
     while( built < s ) {
         ter_set( p, mine );
         std::vector<tripoint_om_omt> next;

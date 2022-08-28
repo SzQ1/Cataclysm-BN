@@ -172,7 +172,6 @@ static const trait_id trait_PAINRESIST( "PAINRESIST" );
 static const trait_id trait_PAINRESIST_TROGLO( "PAINRESIST_TROGLO" );
 static const trait_id trait_PARAIMMUNE( "PARAIMMUNE" );
 static const trait_id trait_PARKOUR( "PARKOUR" );
-static const trait_id trait_PER_SLIME_OK( "PER_SLIME_OK" );
 static const trait_id trait_PROF_SKATER( "PROF_SKATER" );
 static const trait_id trait_QUILLS( "QUILLS" );
 static const trait_id trait_SAVANT( "SAVANT" );
@@ -566,47 +565,6 @@ void player::mod_stat( const std::string &stat, float modifier )
         // Fall through to the creature method.
         Character::mod_stat( stat, modifier );
     }
-}
-
-bool player::has_conflicting_trait( const trait_id &flag ) const
-{
-    return ( has_opposite_trait( flag ) || has_lower_trait( flag ) || has_higher_trait( flag ) ||
-             has_same_type_trait( flag ) );
-}
-
-bool player::has_lower_trait( const trait_id &flag ) const
-{
-    for( auto &i : flag->prereqs ) {
-        if( has_trait( i ) || has_lower_trait( i ) ) {
-            return true;
-        }
-    }
-    return false;
-}
-
-bool player::has_higher_trait( const trait_id &flag ) const
-{
-    for( auto &i : flag->replacements ) {
-        if( has_trait( i ) || has_higher_trait( i ) ) {
-            return true;
-        }
-    }
-    return false;
-}
-
-bool player::has_same_type_trait( const trait_id &flag ) const
-{
-    for( auto &i : get_mutations_in_types( flag->types ) ) {
-        if( has_trait( i ) && flag != i ) {
-            return true;
-        }
-    }
-    return false;
-}
-
-bool player::purifiable( const trait_id &flag ) const
-{
-    return flag->purifiable;
 }
 
 std::list<item *> player::get_artifact_items()
@@ -1202,6 +1160,21 @@ int player::impact( const int force, const tripoint &p )
 void player::knock_back_to( const tripoint &to )
 {
     if( to == pos() ) {
+        return;
+    }
+
+    if( rl_dist( pos(), to ) < 2 && get_map().obstructed_by_vehicle_rotation( pos(), to ) ) {
+        tripoint intervening = to;
+        if( one_in( 2 ) ) {
+            intervening.x = pos().x;
+        } else {
+            intervening.y = pos().y;
+        }
+
+        apply_damage( nullptr, bodypart_id( "torso" ), 3 );
+        add_effect( effect_stunned, 2_turns );
+        add_msg_player_or_npc( _( "You bounce off a %s!" ), _( "<npcname> bounces off a %s!" ),
+                               g->m.obstacle_name( intervening ) );
         return;
     }
 
@@ -3226,6 +3199,14 @@ void player::use( int inventory_position )
     use( loc );
 }
 
+static bool is_pet_food( const item &itm )
+{
+    return itm.type->can_use( "DOGFOOD" ) ||
+           itm.type->can_use( "CATFOOD" ) ||
+           itm.type->can_use( "BIRDFOOD" ) ||
+           itm.type->can_use( "CATTLEFODDER" );
+}
+
 void player::use( item_location loc )
 {
     item &used = *loc.get_item();
@@ -3244,11 +3225,11 @@ void player::use( item_location loc )
         }
         invoke_item( &used, loc.position() );
 
-    } else if( used.type->can_use( "DOGFOOD" ) ||
-               used.type->can_use( "CATFOOD" ) ||
-               used.type->can_use( "BIRDFOOD" ) ||
-               used.type->can_use( "CATTLEFODDER" ) ) {
+    } else if( is_pet_food( used ) ) {
         invoke_item( &used, loc.position() );
+
+    } else if( !used.is_container_empty() && is_pet_food( used.get_contained() ) ) {
+        unload( loc );
 
     } else if( !used.is_craft() && ( used.is_medication() || ( !used.type->has_use() &&
                                      ( used.is_food() ||
@@ -3535,21 +3516,6 @@ bool player::studied_all_recipes( const itype &book ) const
     return true;
 }
 
-const recipe_subset &player::get_learned_recipes() const
-{
-    // Cache validity check
-    if( *_skills != *valid_autolearn_skills ) {
-        for( const auto &r : recipe_dict.all_autolearn() ) {
-            if( meets_skill_requirements( r->autolearn_requirements ) ) {
-                learned_recipes->include( r );
-            }
-        }
-        *valid_autolearn_skills = *_skills; // Reassign the validity stamp
-    }
-
-    return *learned_recipes;
-}
-
 recipe_subset player::get_recipes_from_books( const inventory &crafting_inv,
         recipe_filter filter ) const
 {
@@ -3812,34 +3778,6 @@ bool player::can_sleep()
     return result;
 }
 
-// Returned values range from 1.0 (unimpeded vision) to 11.0 (totally blind).
-//  1.0 is LIGHT_AMBIENT_LIT or brighter
-//  4.0 is a dark clear night, barely bright enough for reading and crafting
-//  6.0 is LIGHT_AMBIENT_DIM
-//  7.3 is LIGHT_AMBIENT_MINIMAL, a dark cloudy night, unlit indoors
-// 11.0 is zero light or blindness
-float player::fine_detail_vision_mod( const tripoint &p ) const
-{
-    // PER_SLIME_OK implies you can get enough eyes around the bile
-    // that you can generally see.  There still will be the haze, but
-    // it's annoying rather than limiting.
-    if( is_blind() ||
-        ( ( has_effect( effect_boomered ) || has_effect( effect_darkness ) ) &&
-          !has_trait( trait_PER_SLIME_OK ) ) ) {
-        return 11.0;
-    }
-    // Scale linearly as light level approaches LIGHT_AMBIENT_LIT.
-    // If we're actually a source of light, assume we can direct it where we need it.
-    // Therefore give a hefty bonus relative to ambient light.
-    float own_light = std::max( 1.0f, LIGHT_AMBIENT_LIT - active_light() - 2.0f );
-
-    // Same calculation as above, but with a result 3 lower.
-    float ambient_light = std::max( 1.0f,
-                                    LIGHT_AMBIENT_LIT - g->m.ambient_light_at( p == tripoint_zero ? pos() : p ) + 1.0f );
-
-    return std::min( own_light, ambient_light );
-}
-
 void player::practice( const skill_id &id, int amount, int cap, bool suppress_warning )
 {
     SkillLevel &level = get_skill_level_object( id );
@@ -3937,25 +3875,9 @@ void player::handle_skill_warning( const skill_id &id, bool force_warning )
     }
 }
 
-int player::exceeds_recipe_requirements( const recipe &rec ) const
-{
-    return get_all_skills().exceeds_recipe_requirements( rec );
-}
-
 bool player::has_recipe_requirements( const recipe &rec ) const
 {
     return get_all_skills().has_recipe_requirements( rec );
-}
-
-bool player::can_decomp_learn( const recipe &rec ) const
-{
-    return !rec.learn_by_disassembly.empty() &&
-           meets_skill_requirements( rec.learn_by_disassembly );
-}
-
-bool player::knows_recipe( const recipe *rec ) const
-{
-    return get_learned_recipes().contains( *rec );
 }
 
 int player::has_recipe( const recipe *r, const inventory &crafting_inv,
@@ -3971,14 +3893,6 @@ int player::has_recipe( const recipe *r, const inventory &crafting_inv,
 
     const auto available = get_available_recipes( crafting_inv, &helpers );
     return available.contains( *r ) ? available.get_custom_difficulty( r ) : -1;
-}
-
-void player::learn_recipe( const recipe *const rec )
-{
-    if( rec->never_learn ) {
-        return;
-    }
-    learned_recipes->include( rec );
 }
 
 bool player::has_gun_for_ammo( const ammotype &at ) const

@@ -72,6 +72,7 @@
 #include "pathfinding.h"
 #include "player.h"
 #include "profession.h"
+#include "recipe_dictionary.h"
 #include "ret_val.h"
 #include "rng.h"
 #include "scent_map.h"
@@ -216,7 +217,6 @@ static const trait_id trait_SQUEAMISH( "SQUEAMISH" );
 static const trait_id trait_WOOLALLERGY( "WOOLALLERGY" );
 
 static const bionic_id bio_ads( "bio_ads" );
-static const bionic_id bio_blaster( "bio_blaster" );
 static const bionic_id bio_blindfold( "bio_blindfold" );
 static const bionic_id bio_climate( "bio_climate" );
 static const bionic_id bio_earplugs( "bio_earplugs" );
@@ -1296,9 +1296,6 @@ int Character::get_working_arm_count() const
     }
     if( !is_limb_disabled( bodypart_id( "arm_r" ) ) ) {
         limb_count++;
-    }
-    if( has_bionic( bio_blaster ) && limb_count > 0 ) {
-        limb_count--;
     }
 
     return limb_count;
@@ -3429,8 +3426,8 @@ int Character::read_speed( bool return_stat_effect ) const
     /** @EFFECT_INT increases reading speed by 3s per level above 8*/
     int ret = to_moves<int>( 1_minutes ) - to_moves<int>( 3_seconds ) * ( intel - 8 );
 
-    if( has_bionic( afs_bio_linguistic_coprocessor ) ) { // Aftershock
-        ret *= .85;
+    if( has_bionic( afs_bio_linguistic_coprocessor ) ) {
+        ret *= .75;
     }
 
     ret *= mutation_value( "reading_speed_multiplier" );
@@ -7876,7 +7873,7 @@ tripoint Character::adjacent_tile() const
                 }
             }
 
-            if( dangerous_fields == 0 ) {
+            if( dangerous_fields == 0 && ! get_map().obstructed_by_vehicle_rotation( pos(), p ) ) {
                 ret.push_back( p );
             }
         }
@@ -10568,4 +10565,37 @@ bool Character::defer_move( const tripoint &next )
     auto_move_route.insert( auto_move_route.begin(), next );
     next_expected_position = pos();
     return true;
+}
+
+const recipe_subset &Character::get_learned_recipes() const
+{
+    if( *_skills != *autolearn_skills_stamp ) {
+        for( const auto &r : recipe_dict.all_autolearn() ) {
+            if( meets_skill_requirements( r->autolearn_requirements ) ) {
+                learned_recipes->include( r );
+            }
+        }
+        *autolearn_skills_stamp = *_skills;
+    }
+
+    return *learned_recipes;
+}
+
+bool Character::knows_recipe( const recipe *rec ) const
+{
+    return get_learned_recipes().contains( *rec );
+}
+
+void Character::learn_recipe( const recipe *const rec )
+{
+    if( rec->never_learn ) {
+        return;
+    }
+    learned_recipes->include( rec );
+}
+
+bool Character::can_learn_by_disassembly( const recipe &rec ) const
+{
+    return !rec.learn_by_disassembly.empty() &&
+           meets_skill_requirements( rec.learn_by_disassembly );
 }
