@@ -68,8 +68,20 @@ var namespaces_dup =
     [ "anonymous_namespace{clzones.cpp}", "namespaceanonymous__namespace_02clzones_8cpp_03.html", [
       [ "zone_type_factory", "namespaceanonymous__namespace_02clzones_8cpp_03.html#a406c1737dfc42cacbea5c69e6fa78a15", null ]
     ] ],
+    [ "anonymous_namespace{construction.cpp}", "namespaceanonymous__namespace_02construction_8cpp_03.html", [
+      [ "all_constructions", "namespaceanonymous__namespace_02construction_8cpp_03.html#a5da2e229b1546f7772edc48fa79116e6", null ],
+      [ "constructions_sorted", "namespaceanonymous__namespace_02construction_8cpp_03.html#ad6f88bc31464db11fe2f957ce8abfe3d", null ]
+    ] ],
     [ "anonymous_namespace{construction_category.cpp}", "namespaceanonymous__namespace_02construction__category_8cpp_03.html", [
       [ "all_construction_categories", "namespaceanonymous__namespace_02construction__category_8cpp_03.html#a62dfe7e8a222a935c47fbe43044973b1", null ]
+    ] ],
+    [ "anonymous_namespace{construction_group.cpp}", "namespaceanonymous__namespace_02construction__group_8cpp_03.html", [
+      [ "all_construction_groups", "namespaceanonymous__namespace_02construction__group_8cpp_03.html#a1abe9358fbbbb232d9e3a1d6b06d8ca8", null ]
+    ] ],
+    [ "anonymous_namespace{construction_sequence.cpp}", "namespaceanonymous__namespace_02construction__sequence_8cpp_03.html", [
+      [ "all_sequences", "namespaceanonymous__namespace_02construction__sequence_8cpp_03.html#ad2faffcffdd5b5e821cd1b7deeeea75a", null ],
+      [ "sequences_for_furn", "namespaceanonymous__namespace_02construction__sequence_8cpp_03.html#aeb9da88db26bdb23b47113689c9d7193", null ],
+      [ "sequences_for_ter", "namespaceanonymous__namespace_02construction__sequence_8cpp_03.html#ae49fae693fc8c1c1f9a279f9482d202d", null ]
     ] ],
     [ "anonymous_namespace{debug.cpp}", "namespaceanonymous__namespace_02debug_8cpp_03.html", [
       [ "ignored_messages", "namespaceanonymous__namespace_02debug_8cpp_03.html#aac5ec8bb66a16096a2fd9ae0e87fcdf6", null ]
@@ -232,10 +244,16 @@ var namespaces_dup =
       [ "move", "namespaceavatar__action.html#a76ba74774376a08222b8cdcce08f7304", null ],
       [ "plthrow", "namespaceavatar__action.html#a88a027e47bb814ff61be3e15bd0b8777", null ],
       [ "ramp_move", "namespaceavatar__action.html#abadb3333d387007017d11836c606f1e5", null ],
+      [ "reload", "namespaceavatar__action.html#a03cf09d521b2df8ec4e14523b73804b4", null ],
+      [ "reload_item", "namespaceavatar__action.html#a074ed32b4d421de7f0749e9aef6fe0c9", null ],
+      [ "reload_weapon", "namespaceavatar__action.html#ab640f9426b7ae37fb1fc632cb28e0e30", null ],
+      [ "reload_wielded", "namespaceavatar__action.html#a0263b369eb4d729c1439738f8abcd3f2", null ],
       [ "swim", "namespaceavatar__action.html#a9611563bffc4224b3e724db03688bdd4", null ],
       [ "unload", "namespaceavatar__action.html#afd349bc65fc375556b15241ab68095b1", null ],
       [ "use_item", "namespaceavatar__action.html#ad651718c214e707034374b85d936d671", null ],
-      [ "use_item", "namespaceavatar__action.html#a113bad02e3695c9de0d031d3846ebea9", null ]
+      [ "use_item", "namespaceavatar__action.html#a113bad02e3695c9de0d031d3846ebea9", null ],
+      [ "wield", "namespaceavatar__action.html#a26845c63bf68ad9462172186e3b75cf6", null ],
+      [ "wield", "namespaceavatar__action.html#a4237c55ad7f626915cdb297d52841b8f", null ]
     ] ],
     [ "base_camps", "namespacebase__camps.html", "namespacebase__camps" ],
     [ "behavior", "namespacebehavior.html", "namespacebehavior" ],
@@ -336,7 +354,7 @@ var namespaces_dup =
       [ "check_empty", "namespaceconstruct.html#a5c7bfa81b1b783dbe606e8e1ae270cb2", null ],
       [ "check_empty_up_OK", "namespaceconstruct.html#a8e2634d318be5dc50bdb38f4b30f726f", null ],
       [ "check_no_trap", "namespaceconstruct.html#a067fa17ebfe14fea8e561056651e010f", null ],
-      [ "check_nothing", "namespaceconstruct.html#a993b2191890a54b54730c413070ea577", null ],
+      [ "check_nothing", "namespaceconstruct.html#ac4566ee40eb51023fc15b0f21a120524", null ],
       [ "check_ramp_high", "namespaceconstruct.html#a6b8cdaae5a7bd8bcae16e4670b729896", null ],
       [ "check_ramp_low", "namespaceconstruct.html#aeb00f0d89830aff9fd97f91ada1300b3", null ],
       [ "check_support", "namespaceconstruct.html#adf73ee06612e17a7462faf763b99340b", null ],
@@ -365,11 +383,40 @@ var namespaces_dup =
       [ "load", "namespaceconstruction__categories.html#a7f83111651080465e41ffe8d71b044b8", null ],
       [ "reset", "namespaceconstruction__categories.html#a626e729f7a1ffbe907bab878ccb61a2d", null ]
     ] ],
+    [ "construction_groups", "namespaceconstruction__groups.html", [
+      [ "get_all", "namespaceconstruction__groups.html#aa39b5e6512ad85bc06a16c92d758cc2a", null ],
+      [ "load", "namespaceconstruction__groups.html#aa2c993aeb54fad42759995256dc506f4", null ],
+      [ "reset", "namespaceconstruction__groups.html#a818b6b3bcdd82c5a18a7866adca57ee3", null ]
+    ] ],
+    [ "construction_sequences", "namespaceconstruction__sequences.html", [
+      [ "check_consistency", "namespaceconstruction__sequences.html#ae3dd77cfb59719ab0ce5f04905eb40c1", null ],
+      [ "finalize", "namespaceconstruction__sequences.html#a9d09cc131d46de4a5c993f90dd9407b7", null ],
+      [ "has_valid_category", "namespaceconstruction__sequences.html#abe055de70abaec3f4870b1bbdc0eaf2a", null ],
+      [ "has_valid_result", "namespaceconstruction__sequences.html#ab87dcf409cee13a4410f85cf2e92bfb7", null ],
+      [ "is_valid_first_step", "namespaceconstruction__sequences.html#a63bbedcb693b9cd0f74a7fc5e6b5b864", null ],
+      [ "load", "namespaceconstruction__sequences.html#a931e4647d20ea9a3f0f2f1a3368a87b7", null ],
+      [ "lookup_sequence", "namespaceconstruction__sequences.html#aaaf5d2418465c08d386c8f81c6fe041f", null ],
+      [ "lookup_sequence", "namespaceconstruction__sequences.html#aaea5fc5d3181e2de94c3f0907a6504d9", null ],
+      [ "reset", "namespaceconstruction__sequences.html#abf7e7f9130e3548ede8580c0e8ceb01e", null ]
+    ] ],
+    [ "constructions", "namespaceconstructions.html", [
+      [ "check_consistency", "namespaceconstructions.html#a012e345f9cc8d1b1caaeee08acbea958", null ],
+      [ "finalize", "namespaceconstructions.html#aff7bc057c801d3b2deef09e83cf3e7d7", null ],
+      [ "get_all_sorted", "namespaceconstructions.html#ac95b3bf969c90f634ef207f68584fda3", null ],
+      [ "load", "namespaceconstructions.html#acd2f385d7fcf3afb87b0407e1c8bfb91", null ],
+      [ "override_build_times", "namespaceconstructions.html#a13ebf7d49064b926b2911dadef16bf03", null ],
+      [ "reset", "namespaceconstructions.html#a5dd444bbaaedcd39c8e8208e6b646378", null ]
+    ] ],
     [ "coords", "namespacecoords.html", "namespacecoords" ],
     [ "crafting", "namespacecrafting.html", [
+      [ "can_disassemble", "namespacecrafting.html#a33e973ebbe76aa946752c7f3b4a4392d", null ],
       [ "charges_for_complete", "namespacecrafting.html#a66f83eefe72e71cf1a8831fde5afe0aa", null ],
       [ "charges_for_continuing", "namespacecrafting.html#a653e8b3027cf7e8256c46600bdea2697", null ],
       [ "charges_for_starting", "namespacecrafting.html#a6bd0760f7e4a7e545662d263469fb277", null ],
+      [ "complete_disassemble", "namespacecrafting.html#a6895224ef92a2b991f276b2ea25ca15f", null ],
+      [ "disassemble", "namespacecrafting.html#a6f70f042817b423f427532947f6bf4dd", null ],
+      [ "disassemble", "namespacecrafting.html#a6e0fbc3f9cae7380bb61c26f60dbd821", null ],
+      [ "disassemble_all", "namespacecrafting.html#adb3b3e5acddfb384496ef6157d17c3c6", null ],
       [ "find_tool_component", "namespacecrafting.html#a5844edf7e04b20037d08a1215cf62236", null ],
       [ "get_books_for_recipe", "namespacecrafting.html#a0d310e1d954941b884e3806116ae6f7b", null ],
       [ "get_books_for_recipe", "namespacecrafting.html#a22e3c95d08749d4a4a07b9aaf64db9e8", null ],
@@ -467,6 +514,28 @@ var namespaces_dup =
     ] ],
     [ "enum_traits_detail", "namespaceenum__traits__detail.html", [
       [ "last_type", "namespaceenum__traits__detail.html#a323fc4524d7546ac92565c8440ef1157", null ]
+    ] ],
+    [ "examine_item_menu", "namespaceexamine__item__menu.html", [
+      [ "hint_rating", "namespaceexamine__item__menu.html#afb0565ed1efb7315c7703ceb4fca8399", [
+        [ "cant", "namespaceexamine__item__menu.html#afb0565ed1efb7315c7703ceb4fca8399aff706fc361a57a40a41435153397513a", null ],
+        [ "iffy", "namespaceexamine__item__menu.html#afb0565ed1efb7315c7703ceb4fca8399a394188710799de3dcc6cb1582e490004", null ],
+        [ "good", "namespaceexamine__item__menu.html#afb0565ed1efb7315c7703ceb4fca8399a755f85c2723bb39381c7379a604160d8", null ]
+      ] ],
+      [ "menu_pos_t", "namespaceexamine__item__menu.html#a8b68cfe375a1712f8dd0cef484976020", [
+        [ "left", "namespaceexamine__item__menu.html#a8b68cfe375a1712f8dd0cef484976020a811882fecd5c7618d7099ebbd39ea254", null ],
+        [ "right", "namespaceexamine__item__menu.html#a8b68cfe375a1712f8dd0cef484976020a7c4f29407893c334a6cb7a87bf045c0d", null ]
+      ] ],
+      [ "rate_action_change_side", "namespaceexamine__item__menu.html#a955b5994c5b272ead7ea3a04e27dfa76", null ],
+      [ "rate_action_disassemble", "namespaceexamine__item__menu.html#a2928396bf2a244345b04c750b8b82709", null ],
+      [ "rate_action_eat", "namespaceexamine__item__menu.html#a2020b22b148cdb10f8d5a21109d23cb7", null ],
+      [ "rate_action_mend", "namespaceexamine__item__menu.html#a54389d0b494321eaff498cfe32006c9c", null ],
+      [ "rate_action_read", "namespaceexamine__item__menu.html#a0faff404d5d10a49b84d44f297175129", null ],
+      [ "rate_action_reload", "namespaceexamine__item__menu.html#ab24e5f9726586e01af1ca41bf0a97ba7", null ],
+      [ "rate_action_takeoff", "namespaceexamine__item__menu.html#a2558b816209a853bc3d980a8b4bc5eaa", null ],
+      [ "rate_action_unload", "namespaceexamine__item__menu.html#a51ca4ae6b76aafd7b2bfe3bf4e85546d", null ],
+      [ "rate_action_use", "namespaceexamine__item__menu.html#ac5ee2fa36d7a77da1ae9d04202d8066a", null ],
+      [ "rate_action_wear", "namespaceexamine__item__menu.html#a964eb449c6cc21de8a521a3ea8386372", null ],
+      [ "run", "namespaceexamine__item__menu.html#a0ef68cd5b60cc38b1d1655c81dea6b8c", null ]
     ] ],
     [ "explosion_handler", "namespaceexplosion__handler.html", "namespaceexplosion__handler" ],
     [ "ff", "namespaceff.html", [
@@ -613,6 +682,9 @@ var namespaces_dup =
       [ "workbench", "namespaceiexamine.html#a1562d040bf1e91a0140086bd6f905802", null ]
     ] ],
     [ "io", "namespaceio.html", "namespaceio" ],
+    [ "item_funcs", "namespaceitem__funcs.html", [
+      [ "can_be_unloaded", "namespaceitem__funcs.html#a59e0738ff81bbd95e725baecf3e23545", null ]
+    ] ],
     [ "item_group", "namespaceitem__group.html", [
       [ "ItemList", "namespaceitem__group.html#a1756cb07c624c3169988316a8615ff69", null ],
       [ "debug_spawn", "namespaceitem__group.html#a7cf722822ed58d63e5b2c1714ae6fc4b", null ],
@@ -1128,6 +1200,7 @@ var namespaces_dup =
     ] ],
     [ "monexamine", "namespacemonexamine.html", [
       [ "add_armor", "namespacemonexamine.html#aae7a3811b8d378a0968e67504f671bdf", null ],
+      [ "add_leash", "namespacemonexamine.html#ac213a1f089bcc2602a6c6c9d58d1d7b4", null ],
       [ "attach_bag_to", "namespacemonexamine.html#a935d4c4eb310af58bb939713d5cd22c9", null ],
       [ "attach_or_remove_saddle", "namespacemonexamine.html#a4396430d7db63915584d98c8180ea646", null ],
       [ "dump_items", "namespacemonexamine.html#a684505599f42f0f8c335365a2e0cd73c", null ],
@@ -1146,10 +1219,14 @@ var namespaces_dup =
       [ "remove_bag_from", "namespacemonexamine.html#a2f302aad60309cfa27768eaa40a1b40d", null ],
       [ "remove_battery", "namespacemonexamine.html#ae632756df3737235336f084961b8df6c", null ],
       [ "remove_harness", "namespacemonexamine.html#aec6fc547baa6fbcade434b0c8b38c905", null ],
+      [ "remove_leash", "namespacemonexamine.html#aa21165a63662ca525d1d9eea0a5b0d74", null ],
       [ "rename_pet", "namespacemonexamine.html#ae3ae4dbba4b470de0cb54e316337d6fb", null ],
       [ "shear_animal", "namespacemonexamine.html#af7c79c1c022f82da8a1cedeceb969aeb", null ],
+      [ "start_leading", "namespacemonexamine.html#a1c203b2eee53d0bcd927c4271e410c87", null ],
+      [ "stop_leading", "namespacemonexamine.html#a663586e54746514203b84f302e5b7faf", null ],
       [ "swap", "namespacemonexamine.html#af4ee634a5921005409a5f3aa79e4a8a3", null ],
-      [ "tie_or_untie", "namespacemonexamine.html#a48eed9a72d82e4a9258fbfbe7996aaf1", null ]
+      [ "tie_pet", "namespacemonexamine.html#ae76b120af015a9112d4ae33380b28164", null ],
+      [ "untie_pet", "namespacemonexamine.html#a3500f4f80a6dc864dac50a5af744be0a", null ]
     ] ],
     [ "monfactions", "namespacemonfactions.html", [
       [ "finalize", "namespacemonfactions.html#a420bb089e53354a988195b3f136347ec", null ],
