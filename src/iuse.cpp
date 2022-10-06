@@ -24,6 +24,7 @@
 #include "animation.h"
 #include "artifact.h"
 #include "avatar.h"
+#include "avatar_action.h"
 #include "bodypart.h"
 #include "calendar.h"
 #include "cata_utility.h"
@@ -1726,7 +1727,7 @@ int iuse::remove_all_mods( player *p, item *, bool, const tripoint & )
         return 0;
     }
 
-    if( !loc->ammo_remaining() || g->unload( loc ) ) {
+    if( !loc->ammo_remaining() || p->unload( loc ) ) {
         item *mod = loc->contents.get_item_with(
         []( const item & e ) {
             return e.is_toolmod() && !e.is_irremovable();
@@ -5963,7 +5964,7 @@ int iuse::toolmod_attach( player *p, item *it, bool, const tripoint & )
     }
 
     if( loc->ammo_remaining() ) {
-        if( !g->unload( loc ) ) {
+        if( !p->unload( loc ) ) {
             p->add_msg_if_player( m_info, _( "You cancel unloading the tool." ) );
             return 0;
         }
@@ -9596,6 +9597,10 @@ int iuse::craft( player *p, item *it, bool, const tripoint &pos )
 
 int iuse::disassemble( player *p, item *it, bool, const tripoint & )
 {
+    if( !p->is_avatar() ) {
+        debugmsg( "disassemble iuse is not implemented for NPCs." );
+        return 0;
+    }
     if( p->is_mounted() ) {
         p->add_msg_if_player( m_info, _( "You cannot do that while mounted." ) );
         return 0;
@@ -9604,7 +9609,7 @@ int iuse::disassemble( player *p, item *it, bool, const tripoint & )
         return 0;
     }
 
-    p->disassemble( item_location( *p, it ), false );
+    crafting::disassemble( *p->as_avatar(), item_location( *p, it ) );
 
     return 0;
 }

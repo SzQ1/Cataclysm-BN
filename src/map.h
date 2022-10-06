@@ -92,6 +92,10 @@ template<typename T>
 struct weighted_int_list;
 struct rl_vec2d;
 
+
+/** Causes all generated maps to be empty grass and prevents saved maps from being loaded, used by the test suite */
+extern bool disable_mapgen;
+
 namespace cata
 {
 template <class T> class poly_serialized;
@@ -1711,20 +1715,24 @@ class map
 
     protected:
         void saven( const tripoint &grid );
-        void loadn( const tripoint &grid, bool update_vehicles );
-        void loadn( const point &grid, bool update_vehicles ) {
+        bool loadn( const tripoint &grid, bool update_vehicles );
+        bool loadn( const point &grid, bool update_vehicles ) {
             if( zlevels ) {
+                bool generated = false;
                 for( int gridz = -OVERMAP_DEPTH; gridz <= OVERMAP_HEIGHT; gridz++ ) {
-                    loadn( tripoint( grid, gridz ), update_vehicles );
+                    generated |= loadn( tripoint( grid, gridz ), update_vehicles );
                 }
 
-                // Note: we want it in a separate loop! It is a post-load cleanup
-                // Since we're adding roofs, we want it to go up (from lowest to highest)
-                for( int gridz = -OVERMAP_DEPTH; gridz <= OVERMAP_HEIGHT; gridz++ ) {
-                    add_roofs( tripoint( grid, gridz ) );
+                if( generated ) {
+                    // Note: we want it in a separate loop! It is a post-load cleanup
+                    // Since we're adding roofs, we want it to go up (from lowest to highest)
+                    for( int gridz = -OVERMAP_DEPTH; gridz <= OVERMAP_HEIGHT; gridz++ ) {
+                        add_roofs( tripoint( grid, gridz ) );
+                    }
                 }
+                return generated;
             } else {
-                loadn( tripoint( grid, abs_sub.z ), update_vehicles );
+                return loadn( tripoint( grid, abs_sub.z ), update_vehicles );
             }
         }
         /**

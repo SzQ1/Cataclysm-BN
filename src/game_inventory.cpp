@@ -14,6 +14,7 @@
 #include "bionics.h"
 #include "calendar.h"
 #include "cata_utility.h"
+#include "crafting.h"
 #include "character.h"
 #include "character_functions.h"
 #include "character_martial_arts.h"
@@ -22,6 +23,7 @@
 #include "damage.h"
 #include "debug.h"
 #include "enums.h"
+#include "examine_item_menu.h"
 #include "game.h"
 #include "input.h"
 #include "inventory.h"
@@ -69,6 +71,7 @@ static const skill_id skill_firstaid( "firstaid" );
 static const quality_id qual_ANESTHESIA( "ANESTHESIA" );
 
 static const bionic_id bio_painkiller( "bio_painkiller" );
+static const bionic_id bio_taste_blocker( "bio_taste_blocker" );
 
 static const trait_id trait_DEBUG_BIONICS( "DEBUG_BIONICS" );
 static const trait_id trait_NOPAIN( "NOPAIN" );
@@ -229,9 +232,6 @@ static item_location inv_internal( player &u, const inventory_selector_preset &p
 
 void game_menus::inv::common( avatar &you )
 {
-    // Return to inventory menu on those inputs
-    static const std::set<int> loop_options = { { '\0', '=', 'f' } };
-
     inventory_pick_selector inv_s( you );
 
     inv_s.set_title( _( "Inventory" ) );
@@ -239,8 +239,7 @@ void game_menus::inv::common( avatar &you )
                         _( "Item hotkeys assigned: <color_light_gray>%d</color>/<color_light_gray>%d</color>" ),
                         you.allocated_invlets().count(), inv_chars.size() ) );
 
-    int res = 0;
-
+    bool started_action = false;
     do {
         you.inv.restack( you );
         inv_s.clear_items();
@@ -257,8 +256,15 @@ void game_menus::inv::common( avatar &you )
             }
         }
 
-        res = g->inventory_item_menu( location );
-    } while( loop_options.count( res ) != 0 );
+        const auto func_pos_x = []() {
+            return 0;
+        };
+        const auto func_width = []() {
+            return 50;
+        };
+        started_action = examine_item_menu::run( location, func_pos_x, func_width,
+                         examine_item_menu::menu_pos_t::right );
+    } while( !started_action );
 }
 
 item_location game_menus::inv::titled_filter_menu( item_filter filter, avatar &you,
@@ -471,7 +477,7 @@ class disassemble_inventory_preset : public pickup_inventory_preset
         }
 
         std::string get_denial( const item_location &loc ) const override {
-            const auto ret = p.can_disassemble( *loc, inv );
+            const ret_val<bool> ret = crafting::can_disassemble( p, *loc, inv );
             if( !ret.success() ) {
                 return ret.str();
             }
@@ -511,10 +517,14 @@ class comestible_inventory_preset : public inventory_selector_preset
 
             append_cell( [ &p, this ]( const item_location & loc ) {
                 const item &it = get_consumable_item( loc );
-                if( it.has_flag( flag_MUSHY ) ) {
-                    return highlight_good_bad_none( p.fun_for( get_consumable_item( loc ) ).first );
+                const int consume_fun = p.fun_for( get_consumable_item( loc ) ).first;
+                if( consume_fun < 0 && p.has_active_bionic( bio_taste_blocker ) &&
+                    p.get_power_level() > units::from_kilojoule( -consume_fun ) ) {
+                    return string_format( "<color_light_gray>[%d]</color>", consume_fun );
+                } else if( it.has_flag( flag_MUSHY ) ) {
+                    return highlight_good_bad_none( consume_fun );
                 } else {
-                    return good_bad_none( p.fun_for( get_consumable_item( loc ) ).first );
+                    return good_bad_none( consume_fun );
                 }
             }, _( "JOY" ) );
 

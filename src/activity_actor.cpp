@@ -13,6 +13,7 @@
 #include "avatar.h"
 #include "calendar.h"
 #include "character.h"
+#include "crafting.h"
 #include "debug.h"
 #include "enums.h"
 #include "event.h"
@@ -37,6 +38,7 @@
 #include "player_activity.h"
 #include "point.h"
 #include "ranged.h"
+#include "recipe_dictionary.h"
 #include "rng.h"
 #include "sounds.h"
 #include "timed_event.h"
@@ -167,7 +169,7 @@ void aim_activity_actor::finish( player_activity &act, Character &who )
         if( reload_requested ) {
             // Reload the gun / select different arrows
             // May assign ACT_RELOAD
-            g->reload_wielded( true );
+            avatar_action::reload_wielded( true );
         }
         return;
     }
@@ -201,6 +203,7 @@ void aim_activity_actor::serialize( JsonOut &jsout ) const
     jsout.member( "snap_to_target", snap_to_target );
     jsout.member( "shifting_view", shifting_view );
     jsout.member( "initial_view_offset", initial_view_offset );
+    jsout.member( "loaded_RAS_weapon", loaded_RAS_weapon );
 
     jsout.end_object();
 }
@@ -220,6 +223,7 @@ std::unique_ptr<activity_actor> aim_activity_actor::deserialize( JsonIn &jsin )
     data.read( "snap_to_target", actor.snap_to_target );
     data.read( "shifting_view", actor.shifting_view );
     data.read( "initial_view_offset", actor.initial_view_offset );
+    data.read( "loaded_RAS_weapon", actor.loaded_RAS_weapon );
 
     return actor.clone();
 }
@@ -258,6 +262,7 @@ bool aim_activity_actor::load_RAS_weapon()
         you.ammo_location.make_dirty();
         if( !you.ammo_location )
         {
+            you.ammo_location = item_location();
             return false;
         }
         if( !gun->can_reload_with( you.ammo_location->typeId() ) )
@@ -291,6 +296,7 @@ bool aim_activity_actor::load_RAS_weapon()
     reload_time += ( sta_percent < 25 ) ? ( ( 25 - sta_percent ) * 2 ) : 0;
 
     you.moves -= reload_time;
+    loaded_RAS_weapon = true;
     return true;
 }
 
@@ -299,7 +305,7 @@ void aim_activity_actor::unload_RAS_weapon()
     // Unload reload-and-shoot weapons to avoid leaving bows pre-loaded with arrows
     avatar &you = get_avatar();
     item *weapon = get_weapon();
-    if( !weapon ) {
+    if( !weapon || !loaded_RAS_weapon ) {
         return;
     }
 
@@ -316,6 +322,8 @@ void aim_activity_actor::unload_RAS_weapon()
             you.moves = moves_before_unload;
         }
     }
+
+    loaded_RAS_weapon = false;
 }
 
 void autodrive_activity_actor::start( player_activity &act, Character &who )
@@ -556,6 +564,124 @@ std::unique_ptr<activity_actor> dig_channel_activity_actor::deserialize( JsonIn 
     data.read( "byproducts_item_group", actor.byproducts_item_group );
 
     return actor.clone();
+}
+
+bool disassemble_activity_actor::try_start_single( player_activity &act, Character &who )
+{
+    if( targets.empty() ) {
+        return false;
+    }
+    const iuse_location &target = targets.front();
+    if( !target.loc ) {
+        debugmsg( "Lost target of ACT_DISASSEMBLE" );
+        targets.clear();
+        return false;
+    }
+    const item &itm = *target.loc;
+    const recipe &dis = recipe_dictionary::get_uncraft( itm.typeId() );
+
+    // Have to check here again in case we ran out of tools
+    const ret_val<bool> can_do = crafting::can_disassemble( who, itm, who.crafting_inventory() );
+    if( !can_do.success() ) {
+        who.add_msg_if_player( m_info, "%s", can_do.c_str() );
+        return false;
+    }
+
+    int moves_needed = dis.time * target.count;
+
+    act.moves_total = moves_needed;
+    act.moves_left = moves_needed;
+    return true;
+}
+
+int disassemble_activity_actor::calc_num_targets() const
+{
+    return static_cast<int>( targets.size() );
+}
+
+void disassemble_activity_actor::start( player_activity &act, Character &who )
+{
+    if( !who.is_avatar() ) {
+        debugmsg( "ACT_DISASSEMBLE is not implemented for NPCs" );
+        act.set_to_null();
+    } else if( !try_start_single( act, who ) ) {
+        act.set_to_null();
+    }
+    initial_num_targets = calc_num_targets();
+}
+
+void disassemble_activity_actor::finish( player_activity &act, Character &who )
+{
+    const iuse_location &target = targets.front();
+    if( !target.loc ) {
+        debugmsg( "Lost target of ACT_DISASSEMBLY" );
+    } else {
+        crafting::complete_disassemble( who, target, get_map().getlocal( pos.raw() ) );
+    }
+    targets.erase( targets.begin() );
+
+    if( try_start_single( act, who ) ) {
+        return;
+    }
+
+    // Make a copy to avoid use-after-free
+    bool recurse = this->recursive;
+
+    act.set_to_null();
+
+    if( recurse ) {
+        crafting::disassemble_all( *who.as_avatar(), recurse );
+    }
+}
+
+void disassemble_activity_actor::serialize( JsonOut &jsout ) const
+{
+    jsout.start_object();
+
+    jsout.member( "targets", targets );
+    jsout.member( "pos", pos );
+    jsout.member( "recursive", recursive );
+    jsout.member( "initial_num_targets", initial_num_targets );
+
+    jsout.end_object();
+}
+
+std::unique_ptr<activity_actor> disassemble_activity_actor::deserialize( JsonIn &jsin )
+{
+    disassemble_activity_actor actor;
+
+    JsonObject data = jsin.get_object();
+
+    data.read( "targets", actor.targets );
+    data.read( "pos", actor.pos );
+    data.read( "recursive", actor.recursive );
+    data.read( "initial_num_targets", actor.initial_num_targets );
+
+    return actor.clone();
+}
+
+act_progress_message disassemble_activity_actor::get_progress_message(
+    const player_activity &act, const Character & ) const
+{
+    std::string msg;
+
+    const int percentage = ( ( act.moves_total - act.moves_left ) * 100 ) / act.moves_total;
+
+    msg = string_format( "%d%%", percentage );
+
+    if( initial_num_targets != 1 ) {
+        constexpr int width = 20; // An arbitrary value
+        std::string item_name_trimmed = trim_by_length( targets.front().loc->display_name(), width );
+
+        msg += string_format(
+                   _( "\n%d out of %d, working on %-20s" ),
+                   initial_num_targets - calc_num_targets() + 1,
+                   initial_num_targets,
+                   item_name_trimmed
+               );
+    }
+
+    return act_progress_message::make_extra_info( std::move( msg ) );
 }
 
 drop_activity_actor::drop_activity_actor( Character &ch, const drop_locations &items,
@@ -1029,6 +1155,80 @@ std::unique_ptr<activity_actor> stash_activity_actor::deserialize( JsonIn &jsin 
     return actor.clone();
 }
 
+void throw_activity_actor::do_turn( player_activity &act, Character &who )
+{
+    // Make copies of relevant values since the class would
+    // not be available after act.set_to_null()
+    item_location target = target_loc;
+    cata::optional<tripoint> blind_throw_pos = blind_throw_from_pos;
+
+    // Stop the activity. Whether we will or will not throw doesn't matter.
+    act.set_to_null();
+
+    if( !who.is_avatar() ) {
+        // Sanity check
+        debugmsg( "ACT_THROW is not applicable for NPCs." );
+        return;
+    }
+
+    // Shift our position to our "peeking" position, so that the UI
+    // for picking a throw point lets us target the location we couldn't
+    // otherwise see.
+    const tripoint original_player_position = who.pos();
+    if( blind_throw_pos ) {
+        who.setpos( *blind_throw_pos );
+    }
+
+    target_handler::trajectory trajectory = target_handler::mode_throw( *who.as_avatar(), *target,
+                                            blind_throw_pos.has_value() );
+
+    // If we previously shifted our position, put ourselves back now that we've picked our target.
+    if( blind_throw_pos ) {
+        who.setpos( original_player_position );
+    }
+
+    if( trajectory.empty() ) {
+        return;
+    }
+
+    if( &*target != &who.weapon ) {
+        // This is to represent "implicit offhand wielding"
+        int extra_cost = who.item_handling_cost( *target, true, INVENTORY_HANDLING_PENALTY / 2 );
+        who.mod_moves( -extra_cost );
+    }
+
+    item thrown = *target.get_item();
+    if( target->count_by_charges() && target->charges > 1 ) {
+        target->mod_charges( -1 );
+        thrown.charges = 1;
+    } else {
+        target.remove_item();
+    }
+    who.as_player()->throw_item( trajectory.back(), thrown, blind_throw_pos );
+}
+
+void throw_activity_actor::serialize( JsonOut &jsout ) const
+{
+    jsout.start_object();
+
+    jsout.member( "target_loc", target_loc );
+    jsout.member( "blind_throw_from_pos", blind_throw_from_pos );
+
+    jsout.end_object();
+}
+
+std::unique_ptr<activity_actor> throw_activity_actor::deserialize( JsonIn &jsin )
+{
+    throw_activity_actor actor;
+
+    JsonObject data = jsin.get_object();
+
+    data.read( "target_loc", actor.target_loc );
+    data.read( "blind_throw_from_pos", actor.blind_throw_from_pos );
+
+    return actor.clone();
+}
+
 void wash_activity_actor::serialize( JsonOut &jsout ) const
 {
     jsout.start_object();
@@ -1068,6 +1268,7 @@ deserialize_functions = {
     { activity_id( "ACT_OPEN_GATE" ), &open_gate_activity_actor::deserialize },
     { activity_id( "ACT_PICKUP" ), &pickup_activity_actor::deserialize },
     { activity_id( "ACT_STASH" ), &stash_activity_actor::deserialize },
+    { activity_id( "ACT_THROW" ), &throw_activity_actor::deserialize },
     { activity_id( "ACT_WASH" ), &wash_activity_actor::deserialize },
 };
 } // namespace activity_actors

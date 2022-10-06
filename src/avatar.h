@@ -44,7 +44,7 @@ struct monster_visible_info {
     // 6 8 2    0-7 are provide by direction_from()
     // 5 4 3    8 is used for local monsters (for when we explain them below)
     std::vector<npc *> unique_types[9];
-    std::vector<const mtype *> unique_mons[9];
+    std::vector<std::pair<const mtype *, int>> unique_mons[9];
 
     // If the moster visible in this direction is dangerous
     bool dangerous[8] = {};
@@ -96,6 +96,8 @@ class avatar : public player
         /** Returns last stored map tile in given location in curses mode */
         int get_memorized_symbol( const tripoint &p ) const;
         void clear_memorized_tile( const tripoint &pos );
+        /** Returns last stored map tile in given location in tiles mode */
+        bool has_memorized_tile_for_autodrive( const tripoint &p ) const;
 
         /** Provides the window and detailed morale data */
         void disp_morale();
@@ -152,8 +154,6 @@ class avatar : public player
         void do_read( item_location loc );
         /** Note that we've read a book at least once. **/
         bool has_identified( const itype_id &item_id ) const override;
-
-        hint_rating rate_action_read( const item &it ) const;
 
         void wake_up();
         // Grab furniture / vehicle

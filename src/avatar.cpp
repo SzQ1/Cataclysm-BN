@@ -167,6 +167,11 @@ void avatar::clear_memorized_tile( const tripoint &pos )
     player_map_memory->clear_memorized_tile( pos );
 }
 
+bool avatar::has_memorized_tile_for_autodrive( const tripoint &p ) const
+{
+    return player_map_memory->has_memory_for_autodrive( p );
+}
+
 std::vector<mission *> avatar::get_active_missions() const
 {
     return active_missions;
@@ -937,20 +942,6 @@ void avatar::do_read( item_location loc )
 bool avatar::has_identified( const itype_id &item_id ) const
 {
     return items_identified.count( item_id ) > 0;
-}
-
-hint_rating avatar::rate_action_read( const item &it ) const
-{
-    if( !it.is_book() ) {
-        return hint_rating::cant;
-    }
-
-    if( !has_identified( it.typeId() ) ) {
-        return hint_rating::good;
-    }
-
-    std::vector<std::string> dummy;
-    return get_book_reader( it, dummy ) == nullptr ? hint_rating::iffy : hint_rating::good;
 }
 
 void avatar::wake_up()
